@@ -15,11 +15,13 @@ final readonly class RendererBinding
      * @param  class-string  $target
      * @param  class-string<RendererInterface>|RendererInterface  $renderer
      * @param  bool  $inherit  Whether subclasses / implementers of $target match too.
+     * @param  bool  $isDefault  A built-in default that any explicit registration for the same target replaces.
      */
     public function __construct(
         public string $target,
         public string|RendererInterface $renderer,
         public bool $inherit,
+        public bool $isDefault = false,
     ) {}
 
     /**
@@ -36,10 +38,10 @@ final readonly class RendererBinding
     }
 
     /**
-     * @return array{target: class-string, renderer: class-string<RendererInterface>, inherit: bool}
+     * @return array{target: class-string, renderer: class-string<RendererInterface>, inherit: bool, default: bool}
      */
     public function toArray(): array
     {
-        return ['target' => $this->target, 'renderer' => $this->rendererClass(), 'inherit' => $this->inherit];
+        return ['target' => $this->target, 'renderer' => $this->rendererClass(), 'inherit' => $this->inherit, 'default' => $this->isDefault];
     }
 }

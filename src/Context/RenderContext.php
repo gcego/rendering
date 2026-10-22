@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Gcego\Rendering\Context;
 
 use Gcego\Components\Contracts\ComponentInterface;
+use Gcego\Components\Live\LiveSchema;
 use Gcego\Components\Traversal\ComponentWalker;
 use Gcego\Components\Trees\TreeNode;
 use Gcego\Rendering\Exceptions\InvalidRenderContextException;
@@ -16,6 +17,8 @@ use Gcego\Rendering\State\StatePath;
  * Created for each render and never stored in singletons. It carries only
  * rendering data: no request, user, session or connection objects. State is
  * the hosting Livewire component's (untrusted, already validated) state map.
+ * The resolution, shared by every context of one render, answers how
+ * components stand for the current form state and operation.
  */
 final readonly class RenderContext
 {
@@ -36,12 +39,15 @@ final readonly class RenderContext
         public int $headingLevel,
         public array $metadata,
         public array $state,
+        public Resolution $resolution,
         private array $ancestors,
     ) {}
 
     /**
      * @param  array<string, mixed>  $metadata  Scalar values only.
      * @param  array<string, array<string, mixed>>  $state
+     * @param  LiveSchema|null  $live  The host's live schema over $component, holding form state.
+     * @param  array<string, mixed>  $evaluation  Parameters for computed values when no $live is given ("operation", "record", ...).
      *
      * @throws InvalidRenderContextException
      */
@@ -55,6 +61,8 @@ final readonly class RenderContext
         int $headingLevel = 1,
         array $metadata = [],
         array $state = [],
+        ?LiveSchema $live = null,
+        array $evaluation = [],
     ): self {
         if ($headingLevel < 1 || $headingLevel > 6) {
             throw InvalidRenderContextException::invalid('headingLevel', 'must be between 1 and 6.');
@@ -80,7 +88,7 @@ final readonly class RenderContext
             $approved[$key] = $value;
         }
 
-        return new self(app(ComponentWalker::class)->rootNode($component), $identity, $mode, $locale, $panel, $theme, $headingLevel, $approved, $state, []);
+        return new self(app(ComponentWalker::class)->rootNode($component), $identity, $mode, $locale, $panel, $theme, $headingLevel, $approved, $state, new Resolution($component, $live, $evaluation), []);
     }
 
     /**
@@ -98,6 +106,7 @@ final readonly class RenderContext
             $headingLevel === null ? $this->headingLevel : max(1, min(6, $headingLevel)),
             $this->metadata,
             $this->state,
+            $this->resolution,
             $this->ancestors + [spl_object_id($this->node->component) => true],
         );
     }

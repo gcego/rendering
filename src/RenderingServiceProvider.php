@@ -8,6 +8,7 @@ use Gcego\Components\Component;
 use Gcego\Components\ComponentServiceProvider;
 use Gcego\Core\Contracts\PackageInterface;
 use Gcego\Core\Packages\PackageDescriptor;
+use Gcego\Rendering\Catalog\CatalogRenderers;
 use Gcego\Rendering\Contracts\RenderAuthorizer;
 use Gcego\Rendering\Contracts\RenderHandler;
 use Gcego\Rendering\Contracts\StylingResolver;
@@ -27,7 +28,8 @@ use Illuminate\Support\ServiceProvider;
 /**
  * Laravel integration for gcego/rendering; also the "gcego/rendering" GCEGO package.
  *
- * register() declares bindings, the built-in renderer, and the "render"
+ * register() declares bindings, the built-in renderers (the generic
+ * container and every gcego/components catalog component), and the "render"
  * operation category in gcego/runtime's handler registry (when that registry
  * is first resolved); boot() registers the view namespace and publishing.
  * Nothing is rendered, discovered or loaded here.
@@ -52,6 +54,7 @@ final class RenderingServiceProvider extends ServiceProvider implements PackageI
         $this->app->singleton(RendererRegistry::class, static function (Application $app): RendererRegistry {
             $registry = new RendererRegistry($app);
             $registry->register(Component::class, ContainerRenderer::class, inherit: false);
+            CatalogRenderers::register($registry, $app);
 
             return $registry;
         });

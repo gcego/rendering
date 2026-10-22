@@ -28,8 +28,10 @@ use Illuminate\Validation\Rule;
  * also allow the definition. The output is rendered eagerly, so failures
  * surface inside the pipeline as categorized exceptions.
  *
- * Input: mode ("static"|"livewire"), theme, heading_level (1-6). The panel
- * comes from the trusted context, never from input.
+ * Input: mode ("static"|"livewire"), theme, heading_level (1-6) and
+ * operation (an identifier such as "create", "edit" or "view", which
+ * HiddenOn/VisibleOn and computed values read). The panel comes from the
+ * trusted context, never from input.
  */
 final readonly class RenderOperationHandler implements AuthorizesOperation, RenderHandler, ValidatesOperation
 {
@@ -45,6 +47,7 @@ final readonly class RenderOperationHandler implements AuthorizesOperation, Rend
             'mode' => ['sometimes', Rule::enum(RenderMode::class)],
             'theme' => ['sometimes', 'nullable', 'string', 'max:64', 'regex:'.Identifiers::NamePattern],
             'heading_level' => ['sometimes', 'integer', 'between:1,6'],
+            'operation' => ['sometimes', 'nullable', 'string', 'max:64', 'regex:'.Identifiers::NamePattern],
         ];
     }
 
@@ -88,6 +91,7 @@ final readonly class RenderOperationHandler implements AuthorizesOperation, Rend
         $mode = $request->input('mode');
         $theme = $request->input('theme');
         $headingLevel = $request->input('heading_level', 1);
+        $operation = $request->input('operation');
 
         $html = $this->engine->render(
             $component,
@@ -96,6 +100,7 @@ final readonly class RenderOperationHandler implements AuthorizesOperation, Rend
             panel: $request->context->panel,
             theme: is_string($theme) ? $theme : null,
             headingLevel: is_numeric($headingLevel) ? (int) $headingLevel : 1,
+            evaluation: is_string($operation) ? ['operation' => $operation] : [],
         )->toHtml();
 
         return RenderResult::trustedHtml($html);

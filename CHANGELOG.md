@@ -3,6 +3,20 @@
 All notable changes to `gcego/rendering` are documented in this file.
 The project follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- Built-in renderers for every gcego/components catalog component and page-schema container (`Catalog\CatalogRenderer`, `Catalog\CatalogRenderers`, `Catalog\CatalogView`, `gcego-rendering::catalog.*` views): semantic, accessible and escaped HTML with styling slots and data attributes for style tokens.
+- `Context\Resolution`: catalog components resolve visibility, computed values and field state through gcego/components' live engine. `RenderEngine::render()` accepts the host's `LiveSchema` (`live:`) or evaluation parameters (`evaluation:`), `renderAuthorized()` accepts `evaluation:`, and render operations accept an `operation` input.
+- Livewire mode binds catalog fields with `wire:model` (or `wire:model.live` for fields other components depend on) to the host's `data` property.
+- `RendererRegistry::registerDefault()`: replaceable built-in bindings; `RendererBinding::$isDefault` and `default` in `toArray()`.
+
+### Changed
+
+- `RenderingInspector` also checks the catalog views.
+- Require `gcego/runtime` ^1.0 (the README listed ^0.2).
+
 ## [1.0.0] - 2026-10-22
 
 ### Added
