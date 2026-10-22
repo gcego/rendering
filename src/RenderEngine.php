@@ -8,6 +8,7 @@ use Gcego\Blueprints\Contracts\BlueprintInterface;
 use Gcego\Blueprints\Registry\BlueprintKind;
 use Gcego\Components\Contracts\ComponentInterface;
 use Gcego\Components\Exceptions\InvalidComponentException;
+use Gcego\Components\Live\LiveSchema;
 use Gcego\Registry\Contracts\RegistryInterface;
 use Gcego\Registry\Index\DefinitionDescriptor;
 use Gcego\Rendering\Context\RenderContext;
@@ -31,6 +32,11 @@ use Illuminate\Contracts\Foundation\Application;
  *     app(Runtime::class)->execute(Rendering::operation('table:subjects'));  // through the execution kernel
  *
  * Rendering is the Gcego\Rendering\Facades\Rendering facade over this singleton.
+ *
+ * Catalog components resolve visibility, computed values and field state
+ * through gcego/components' live engine: pass the host's LiveSchema as $live,
+ * or evaluation parameters such as ['operation' => 'edit', 'record' => $record]
+ * as $evaluation for a render without form state.
  *
  * Lifecycle: resolve -> (authorize) -> validate -> context -> renderer -> lazy Blade output.
  */
@@ -60,6 +66,8 @@ final readonly class RenderEngine
      * @param  string|null  $identity  The registry identity of a supplied component, for stable DOM ids and markers.
      * @param  array<string, mixed>  $metadata
      * @param  array<string, array<string, mixed>>  $state
+     * @param  LiveSchema|null  $live  The live schema over the rendered component, holding form state.
+     * @param  array<string, mixed>  $evaluation  Parameters for computed values when no $live is given.
      */
     public function render(
         ComponentInterface|string $target,
@@ -70,12 +78,14 @@ final readonly class RenderEngine
         int $headingLevel = 1,
         array $metadata = [],
         array $state = [],
+        ?LiveSchema $live = null,
+        array $evaluation = [],
     ): RenderResult {
         [$component, $identity] = is_string($target)
             ? [$this->resolve($target), $this->descriptor($target)->key()]
             : [$target, $identity];
 
-        return $this->renderComponent($component, $identity, $mode, $panel, $theme, $headingLevel, $metadata, $state);
+        return $this->renderComponent($component, $identity, $mode, $panel, $theme, $headingLevel, $metadata, $state, $live, $evaluation);
     }
 
     /**
@@ -83,6 +93,7 @@ final readonly class RenderEngine
      *
      * @param  array<string, mixed>  $metadata
      * @param  array<string, array<string, mixed>>  $state
+     * @param  array<string, mixed>  $evaluation  Parameters for computed values, such as ['operation' => 'view'].
      *
      * @throws AuthorizationException
      */
@@ -94,11 +105,12 @@ final readonly class RenderEngine
         int $headingLevel = 1,
         array $metadata = [],
         array $state = [],
+        array $evaluation = [],
     ): RenderResult {
         $descriptor = $this->descriptor($identifier);
         $this->authorizer->authorize($descriptor);
 
-        return $this->renderComponent($this->resolve($identifier), $descriptor->key(), $mode, $panel, $theme, $headingLevel, $metadata, $state);
+        return $this->renderComponent($this->resolve($identifier), $descriptor->key(), $mode, $panel, $theme, $headingLevel, $metadata, $state, null, $evaluation);
     }
 
     /**
@@ -137,8 +149,9 @@ final readonly class RenderEngine
     /**
      * @param  array<string, mixed>  $metadata
      * @param  array<string, array<string, mixed>>  $state
+     * @param  array<string, mixed>  $evaluation
      */
-    private function renderComponent(ComponentInterface $component, ?string $identity, RenderMode $mode, ?string $panel, ?string $theme, int $headingLevel, array $metadata, array $state): RenderResult
+    private function renderComponent(ComponentInterface $component, ?string $identity, RenderMode $mode, ?string $panel, ?string $theme, int $headingLevel, array $metadata, array $state, ?LiveSchema $live, array $evaluation): RenderResult
     {
         $component = $this->validated($component, $identity ?? $component->type());
 
@@ -152,6 +165,8 @@ final readonly class RenderEngine
             headingLevel: $headingLevel,
             metadata: $metadata,
             state: $state,
+            live: $live,
+            evaluation: $evaluation,
         );
 
         return $this->renderer->render($component, $context);

@@ -25,7 +25,7 @@
         "gcego/components": "^0.1",
         "gcego/core": "^1.0",
         "gcego/registry": "^1.1",
-        "gcego/runtime": "^0.2",
+        "gcego/runtime": "^1.0",
         "illuminate/auth": "^13.0",
         "illuminate/contracts": "^13.0",
         "illuminate/support": "^13.0",
@@ -53,7 +53,34 @@
             "url": "../runtime",
             "options": {
                 "versions": {
-                    "gcego/runtime": "0.2.0"
+                    "gcego/runtime": "1.0.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../blueprints",
+            "options": {
+                "versions": {
+                    "gcego/blueprints": "1.0.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../core",
+            "options": {
+                "versions": {
+                    "gcego/core": "1.2.0"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../registry",
+            "options": {
+                "versions": {
+                    "gcego/registry": "1.2.0"
                 }
             }
         }
@@ -92,5 +119,32 @@
         }
     },
     "minimum-stability": "stable",
-    "prefer-stable": true
+    "prefer-stable": true,
+    "archive": {
+        "exclude": [
+            "/vendor",
+            "/build",
+            "/coverage",
+            "/tests",
+            "/docs",
+            "/benchmarks",
+            "/.github",
+            "/.agents",
+            "/.claude",
+            "/.codex",
+            "/.idea",
+            "/.vscode",
+            "/.env",
+            "/.env.*",
+            "/.phpunit.cache",
+            "/.phpunit.result.cache",
+            "/composer.lock",
+            "/phpunit.xml",
+            "/phpunit.xml.dist",
+            "/phpstan.neon",
+            "/phpstan.neon.dist",
+            "/testbench.yaml",
+            "/.editorconfig"
+        ]
+    }
 }

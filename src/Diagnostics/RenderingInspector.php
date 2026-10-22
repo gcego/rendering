@@ -7,6 +7,7 @@ namespace Gcego\Rendering\Diagnostics;
 use Gcego\Components\Contracts\ComponentInterface;
 use Gcego\Components\Traversal\ComponentWalker;
 use Gcego\Registry\Contracts\RegistryInterface;
+use Gcego\Rendering\Catalog\CatalogRenderers;
 use Gcego\Rendering\Renderers\RendererBinding;
 use Gcego\Rendering\Renderers\RendererRegistry;
 use Gcego\Rendering\RenderingConfig;
@@ -47,7 +48,7 @@ final readonly class RenderingInspector
             $diagnostics[] = new RenderDiagnostic('renderers.override', RenderDiagnostic::Warning, sprintf('%s replaced %s for %s.', $override['current'], $override['previous'], $override['target']), $override);
         }
 
-        foreach (self::Views as $view) {
+        foreach ([...self::Views, ...CatalogRenderers::viewNames()] as $view) {
             $exists = $this->views->exists($view);
             $diagnostics[] = new RenderDiagnostic('views', $exists ? RenderDiagnostic::Ok : RenderDiagnostic::Error, sprintf('View [%s] %s.', $view, $exists ? 'is available' : 'is missing'), ['view' => $view]);
         }

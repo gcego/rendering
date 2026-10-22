@@ -20,8 +20,10 @@ use Illuminate\Contracts\Container\Container;
  *  3. the first registered inherit: true binding for an interface C implements.
  *
  * Registering a second renderer for the same target throws unless
- * override: true is passed. Renderers are built once through the container
- * (so they may use constructor injection) and must be stateless.
+ * override: true is passed. Built-in defaults (registerDefault(), such as the
+ * catalog renderers) are the exception: an explicit registration replaces
+ * them silently. Renderers are built once through the container (so they may
+ * use constructor injection) and must be stateless.
  */
 final class RendererRegistry
 {
@@ -66,7 +68,7 @@ final class RendererRegistry
         $binding = new RendererBinding($target, $renderer, $inherit);
         $existing = $this->bindings[$target] ?? null;
 
-        if ($existing !== null && ! $existing->sameAs($binding)) {
+        if ($existing !== null && ! $existing->isDefault && ! $existing->sameAs($binding)) {
             if (! $override) {
                 throw RendererConflictException::conflict($target, $existing->rendererClass(), $binding->rendererClass());
             }
@@ -76,6 +78,26 @@ final class RendererRegistry
 
         $this->bindings[$target] = $binding;
         $this->resolvedBindings = [];
+    }
+
+    /**
+     * Register a built-in renderer that applications may replace with register()
+     * without passing override: true. An existing binding for the target is kept.
+     *
+     * @param  class-string  $target  A ComponentInterface class or interface.
+     * @param  class-string<RendererInterface>|RendererInterface  $renderer
+     *
+     * @throws RendererConflictException
+     */
+    public function registerDefault(string $target, string|RendererInterface $renderer, bool $inherit = true): void
+    {
+        if (isset($this->bindings[$target])) {
+            return;
+        }
+
+        $this->register($target, $renderer, $inherit);
+        $binding = $this->bindings[$target];
+        $this->bindings[$target] = new RendererBinding($binding->target, $binding->renderer, $binding->inherit, isDefault: true);
     }
 
     public function has(ComponentInterface|string $component): bool

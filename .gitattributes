@@ -7,3 +7,7 @@
 /phpstan.neon.dist  export-ignore
 /testbench.yaml     export-ignore
 /.editorconfig      export-ignore
+/.claude            export-ignore
+/build              export-ignore
+/.phpunit.cache     export-ignore
+
